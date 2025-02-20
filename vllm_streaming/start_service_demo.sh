@@ -1,0 +1,1 @@
+python vllm/entrypoints/api_server.py --model /apdcephfs_us/share_300814644/data/nlp/cognitive_kernel/v2/Checkpoints_HF/alpaca/ --worker-use-ray --tensor-parallel-size 8 --port 8081 --host 0.0.0.0

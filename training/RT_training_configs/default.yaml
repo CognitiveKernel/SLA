@@ -1,0 +1,53 @@
+# Model arguments
+# model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
+model_name_or_path: /apdcephfs_gy2/share_302625455/user/ruixinhong/data/Meta-Llama-3-8B-Instruct
+torch_dtype: null
+attn_implementation: flash_attention_2
+
+# Data training arguments
+dataset_mixer:
+  princeton-nlp/llama3-ultrafeedback-armorm: 1
+dataset_splits:
+- train
+- test
+preprocessing_num_workers: 12
+
+# RTTrainer arguments
+bf16: true
+beta: 2.5
+gamma_beta_ratio: 0.55
+do_eval: true
+evaluation_strategy: epoch
+gradient_accumulation_steps: 8
+gradient_checkpointing: False
+gradient_checkpointing_kwargs:
+  use_reentrant: False
+learning_rate: 5.0e-5
+log_level: info
+logging_steps: 3
+lr_scheduler_type: cosine
+max_length: 2048
+max_prompt_length: 1800
+num_train_epochs: 3
+optim: adamw_torch
+output_dir: /apdcephfs_gy2/share_302625455/user/ruixinhong/SimPO/outputs/llama-3-8b-instruct-RT-TT256-L1-seqbt
+run_name: llama-3-8b-instruct-RT-TT256-L1-seqbt
+per_device_train_batch_size: 4
+per_device_eval_batch_size: 4
+push_to_hub: false
+save_strategy: "epoch"
+save_steps: 1
+save_only_model: True
+report_to:
+- tensorboard
+save_total_limit: 20
+seed: 42
+warmup_ratio: 0.1
+## ck_loss_type: The type of loss function used for training the Reward Transformer.
+ck_loss_type: "seqwise_btmodel"
+## tt_hidden_size: The size of the hidden features in the Reward channel of the Reward Transformer.
+tt_hidden_size: 256
+## sr_freeze_base_model: A boolean flag indicating whether to freeze the model parameters of the Policy channel during training.
+sr_freeze_base_model: True
+## sr_head_layer: The number of linear layers that map the final hidden features to reward.
+sr_head_layer: 1
