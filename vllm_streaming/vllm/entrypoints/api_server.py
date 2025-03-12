@@ -100,6 +100,7 @@ async def ck_generate(request: Request) -> Response:
     print("original request", request_dict)
     prompt = request_dict.pop("prompt")
     stream = request_dict.pop("stream", False)
+    return_all_info = request_dict.pop("return_all_info", False)
     # request_dict['ck_mode'] = 'StreamingCheck'
     request_dict['stop_token_ids'] = [128258]
     sampling_params = SamplingParams(**request_dict)
@@ -125,8 +126,13 @@ async def ck_generate(request: Request) -> Response:
                 if len(new_token) > 0:
                     time_usage = time.time() - start_time
                     start_time = time.time()
-                    print(f"new_token: |{repr(new_token)}|, time_usage: {time_usage}")
-                    ret = {"new_token": new_token, "all_info": request_output.all_info}
+                    print(f"{time.ctime()} new_token: |{repr(new_token)}|, time_usage: {time_usage:.2f}s")
+                    if return_all_info:
+                        # This will be very time consuming since `all_info` is large !
+                        print("return all_info")
+                        ret = {"new_token": new_token, "all_info": request_output.all_info}
+                    else:
+                        ret = {"new_token": new_token}
                     yield (json.dumps(ret) + "\0").encode("utf-8")
             else:
                 raise ValueError(f"Unexpected number of outputs: {len(request_output.outputs)}")

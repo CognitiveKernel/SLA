@@ -47,7 +47,7 @@ async def get_output(message, backend='ck_vllm', **kwarg):
         all_info = None
         async for tmp_response in current_connection.ck_generate_stream_eval(message, **kwarg):
             all_response += tmp_response["new_token"]
-            all_info = tmp_response["all_info"]
+            # all_info = tmp_response["all_info"]
         return all_response, all_info
     elif backend == 'vllm':
         all_response = current_connection.get_response(message, **kwarg)
@@ -149,7 +149,7 @@ async def get_ans_alpacaeval(args, data):
             top_p = args.top_p,
         )
 
-        print(all_response)
+        # print(all_response)
 
         answers.append({
             'instruction': item["instruction"],

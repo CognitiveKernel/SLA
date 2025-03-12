@@ -145,6 +145,7 @@ class Sequence:
         # Input + output tokens
         self.tokens: Optional[List[str]] = None
         self.ck_status = 0 # 0 means initialization, 1 means continue, 2 means expand
+        self.cached_score = None
 
     def _append_logical_block(self) -> None:
         block = LogicalTokenBlock(
@@ -264,14 +265,52 @@ class Sequence:
     def set_as_aborted(self):
         self.status = SequenceStatus.FINISHED_ABORTED
 
-    def fork(self, new_seq_id: int) -> "Sequence":
-        new_seq = copy.deepcopy(self)
-        new_seq.seq_id = new_seq_id
-        return new_seq
+    # def fork(self, new_seq_id: int) -> "Sequence":
+    #     new_seq = copy.deepcopy(self)
+    #     new_seq.seq_id = new_seq_id
+    #     return new_seq
     
+    def fork(self, new_seq_id: int) -> "Sequence":
+        new_seq = Sequence(
+            seq_id=new_seq_id,
+            prompt=self.prompt,
+            prompt_token_ids=self.data.prompt_token_ids.copy(),
+            block_size=self.block_size
+        )
+        new_seq.data = SequenceData(self.data.prompt_token_ids.copy())
+        new_seq.data.output_token_ids = self.data.output_token_ids.copy()
+        new_seq.data.cumulative_logprob = self.data.cumulative_logprob
+        new_seq.data.prompt_token_ck_status = self.data.prompt_token_ck_status.copy()
+        new_seq.output_logprobs = copy.copy(self.output_logprobs)
+        new_seq.output_text = self.output_text
+        new_seq.logical_token_blocks = []
+        for block in self.logical_token_blocks:
+            new_block = LogicalTokenBlock(
+                block_number=block.block_number,
+                block_size=block.block_size
+            )
+            new_block.token_ids = block.token_ids.copy()
+            new_block.num_tokens = block.num_tokens
+            new_seq.logical_token_blocks.append(new_block)
+        new_seq.status = self.status
+        new_seq.prefix_offset = self.prefix_offset
+        new_seq.read_offset = self.read_offset
+        new_seq.ck_positive_logits = copy.copy(self.ck_positive_logits)
+        new_seq.cumulative_ck_positive_logits = self.cumulative_ck_positive_logits
+        new_seq.ck_status_record = copy.copy(self.ck_status_record)
+        new_seq.tokens = self.tokens.copy() if self.tokens else None
+        new_seq.ck_status = self.ck_status
+        new_seq.cached_score = self.cached_score
+        return new_seq
+        
     def get_ck_overall_score(self, ck_length_penalty: float = 1.0):
-        seq_len = self.get_len()
-        return sum(self.ck_positive_logits)/len(self.ck_positive_logits) # TODO Reduce double counting
+        # seq_len = self.get_len()
+
+        return sum(self.ck_positive_logits)/len(self.ck_positive_logits)
+
+        # print("Using `get_cumulative_logprob` as ck_positive_logits")
+        # return self.get_cumulative_logprob()/self.get_len()
+
     
     def get_info(self, ck_length_penalty=1.0) -> dict:
         return {'seq_id': self.seq_id,
